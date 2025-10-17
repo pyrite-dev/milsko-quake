@@ -112,6 +112,19 @@ static void uninstall_grabs(void)
 	mouse_active = false;
 }
 
+static int MilskoToQuakeKey(int key){
+	return key;
+}
+
+static int MilskoToQuakeMouse(int btn){
+	int b = 0;
+	if(btn == MwLLMouseLeft) b = 0;
+	if(btn == MwLLMouseMiddle) b = 2;
+	if(btn == MwLLMouseRight) b = 1;
+
+	return K_MOUSE1 + b;
+}
+
 MwPoint mouse;
 void mousemove(MwWidget handle, void* user, void* call) {
 	MwPoint* p = call;
@@ -126,6 +139,26 @@ void mousemove(MwWidget handle, void* user, void* call) {
 	mouse = *p;
 }
 
+void key(MwWidget handle, void* user, void* call){
+	int k = *(int*)call;
+	Key_Event(MilskoToQuakeKey(k), 1);
+}
+
+void keyrelease(MwWidget handle, void* user, void* call){
+	int k = *(int*)call;
+	Key_Event(MilskoToQuakeKey(k), 0);
+}
+
+void mousedown(MwWidget handle, void* user, void* call){
+	MwLLMouse* m = call;
+	Key_Event(MilskoToQuakeMouse(m->button), 1);
+}
+
+void mouseup(MwWidget handle, void* user, void* call){
+	MwLLMouse* m = call;
+	Key_Event(MilskoToQuakeMouse(m->button), 0);
+}
+
 static void HandleEvents(void)
 {
 	int b;
@@ -133,7 +166,7 @@ static void HandleEvents(void)
 	int mwx = vid.width/2;
 	int mwy = vid.height/2;
 
-	MwStep(win);
+	if(MwPending(win)) MwStep(win);
 
 	if (dowarp) {
 		/* move the mouse to the window center again */
@@ -428,6 +461,10 @@ void VID_Init(unsigned char *palette)
 	MwOpenGLMakeCurrent(opengl);
 
 	MwAddUserHandler(opengl, MwNmouseMoveHandler, mousemove, NULL);
+	MwAddUserHandler(opengl, MwNkeyHandler, key, NULL);
+	MwAddUserHandler(opengl, MwNkeyReleaseHandler, keyrelease, NULL);
+	MwAddUserHandler(opengl, MwNmouseDownHandler, mousedown, NULL);
+	MwAddUserHandler(opengl, MwNmouseUpHandler, mouseup, NULL);
 
 	if(fullscreen){
 		/* todo */
