@@ -99,7 +99,6 @@ void D_EndDirectRect (int x, int y, int width, int height)
 
 static void install_grabs(void)
 {
-	MwFocus(opengl);
 	MwHideCursor(opengl);
 	MwGrabPointer(opengl, 1);
 	mouse_active = true;
@@ -123,6 +122,10 @@ static int MilskoToQuakeKey(int key){
 	if(key == MwLLKeyRight) key = K_RIGHTARROW;
 	if(key == MwLLKeyUp) key = K_UPARROW;
 	if(key == MwLLKeyDown) key = K_DOWNARROW;
+	if(key == MwLLKeyLeftShift) key = K_SHIFT;
+	if(key == MwLLKeyRightShift) key = K_SHIFT;
+
+	if('A' <= key && key <= 'Z') return tolower(key);
 
 	return key;
 }
@@ -151,12 +154,16 @@ void mousemove(MwWidget handle, void* user, void* call) {
 
 void key(MwWidget handle, void* user, void* call){
 	int k = *(int*)call;
-	Key_Event(MilskoToQuakeKey(k), 1);
+	k = MilskoToQuakeKey(k);
+	if(k == -0xdead) return;
+	Key_Event(k, 1);
 }
 
 void keyrelease(MwWidget handle, void* user, void* call){
 	int k = *(int*)call;
-	Key_Event(MilskoToQuakeKey(k), 0);
+	k = MilskoToQuakeKey(k);
+	if(k == -0xdead) return;
+	Key_Event(k, 0);
 }
 
 void mousedown(MwWidget handle, void* user, void* call){
@@ -485,8 +492,6 @@ void VID_Init(unsigned char *palette)
 	MwAddUserHandler(opengl, MwNmouseUpHandler, mouseup, NULL);
 	MwAddUserHandler(opengl, MwNfocusInHandler, focusin, NULL);
 	MwAddUserHandler(opengl, MwNfocusOutHandler, focusout, NULL);
-
-	MwFocus(opengl);
 
 	if(fullscreen){
 		/* todo */
