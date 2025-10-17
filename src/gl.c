@@ -33,12 +33,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-#include <RGFW.h>
+#include <Mw/Milsko.h>
+#include <Mw/Widget/OpenGL.h>
 
 #define WARP_WIDTH              320
 #define WARP_HEIGHT             200
 
-static RGFW_window* win;
+static MwWidget win;
+static MwWidget opengl;
 
 
 unsigned short	d_8to16table[256];
@@ -95,91 +97,8 @@ void D_EndDirectRect (int x, int y, int width, int height)
 {
 }
 
-static int RGFWToQuakeKey(u32 keycode)
-{
-	int key;
-	char buf[64];
-
-	key = 0;
-
-	switch(keycode)
-	{
-		case RGFW_pageUp:	 key = K_PGUP; break;
-
-		case RGFW_pageDown:	 key = K_PGDN; break;
-
-		case RGFW_home:	 key = K_HOME; break;
-
-		case RGFW_end:	 key = K_END; break;
-
-		case RGFW_left:	 key = K_LEFTARROW; break;
-
-		case RGFW_right:	key = K_RIGHTARROW;		break;
-
-		case RGFW_down:	 key = K_DOWNARROW; break;
-
-		case RGFW_up:		 key = K_UPARROW;	 break;
-
-		case RGFW_escape: key = K_ESCAPE;		break;
-
-		case RGFW_return: key = K_ENTER;		 break;
-
-		case RGFW_tab:		key = K_TAB;			 break;
-
-		case RGFW_F1:		 key = K_F1;				break;
-
-		case RGFW_F2:		 key = K_F2;				break;
-
-		case RGFW_F3:		 key = K_F3;				break;
-
-		case RGFW_F4:		 key = K_F4;				break;
-
-		case RGFW_F5:		 key = K_F5;				break;
-
-		case RGFW_F6:		 key = K_F6;				break;
-
-		case RGFW_F7:		 key = K_F7;				break;
-
-		case RGFW_F8:		 key = K_F8;				break;
-
-		case RGFW_F9:		 key = K_F9;				break;
-
-		case RGFW_F10:		key = K_F10;			 break;
-
-		case RGFW_F11:		key = K_F11;			 break;
-
-		case RGFW_F12:		key = K_F12;			 break;
-
-		case RGFW_backSpace: key = K_BACKSPACE; break;
-
-		case RGFW_delete: key = K_DEL; break;
-
-		case RGFW_shiftL:
-		case RGFW_shiftR:	key = K_SHIFT;		break;
-
-		case RGFW_controlL:
-		case RGFW_controlR:	key = K_CTRL;		 break;
-
-		case RGFW_altL:
-		case RGFW_altR: key = K_ALT;			break;
-
-		case RGFW_insert:key = K_INS; break;
-
-		default:
-			key = keycode;
-			break;
-	}
-
-	return key;
-}
-
 static void install_grabs(void)
 {
-	i32 width, height;
-	RGFW_window_getSize(win, &width, &height);
-
-	RGFW_window_showMouse(win, 0);
-	RGFW_window_holdMouse(win);
 	mouse_active = true;
 }
 
@@ -190,55 +109,21 @@ static void uninstall_grabs(void)
 
 	/* TODO */
 
-	RGFW_window_unholdMouse(win);
 	mouse_active = false;
 }
 
-void focusfunc(RGFW_window* win, u8 inFocus) {
-	if (inFocus == RGFW_FALSE) {
-		RGFW_window_unholdMouse(win);
-	} else {
-		if (mouse_active) {
-			i32 width, height;
-			RGFW_window_getSize(win, &width, &height);
+MwPoint mouse;
+void mousemove(MwWidget handle, void* user, void* call) {
+	MwPoint* p = call;
+	int vecX = p->x - mouse.x;
+	int vecY = p->y - mouse.y;
 
-			RGFW_window_unholdMouse(win);
-			RGFW_window_holdMouse(win);
-		}
-	}
-}
-
-void mouseposfunc(RGFW_window* win, i32 x, i32 y, float vecX, float vecY) {
 	if (mouse_active) {
 		mx += vecX * 2;
 		my += vecY * 2;
 	}
-}
 
-void keyfunc(RGFW_window* win, RGFW_key key, u8 keyChar, RGFW_keymod keyMod, RGFW_bool repeat, RGFW_bool pressed) {
-   	Key_Event(RGFWToQuakeKey(key), pressed);
-}
-
-void mousebuttonfunc(RGFW_window* win, u8 button, u8 pressed) {
-	int b = -1;
-	if (button== RGFW_mouseLeft)
-		b = 0;
-	else if (button == RGFW_mouseMiddle)
-		b = 2;
-	else if (button== RGFW_mouseRight)
-		b = 1;
-	if (b >= 0)
-		Key_Event(K_MOUSE1 + b, pressed);
-}
-
-void scrollfunc(RGFW_window* win, float x, float y) {
-	if (y > 0 ) {
-		Key_Event(K_MWHEELUP, true);
-		Key_Event(K_MWHEELUP, false);
-	} else if (y < 0) {
-		Key_Event(K_MWHEELDOWN, true);
-		Key_Event(K_MWHEELDOWN, false);
-	}
+	mouse = *p;
 }
 
 static void HandleEvents(void)
@@ -248,7 +133,7 @@ static void HandleEvents(void)
 	int mwx = vid.width/2;
 	int mwy = vid.height/2;
 
-	RGFW_pollEvents();
+	MwStep(win);
 
 	if (dowarp) {
 		/* move the mouse to the window center again */
@@ -284,7 +169,7 @@ void VID_Shutdown(void)
 {
 	IN_DeactivateMouse();
 	if (win) {
-		RGFW_window_close(win);
+		MwDestroyWidget(win);
 	}
 	vidmode_active = false;
 	win = NULL;
@@ -437,7 +322,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 void GL_EndRendering (void)
 {
 	glFlush();
-	RGFW_window_swapBuffers_OpenGL(win);
+	MwOpenGLSwapBuffer(opengl);
 }
 
 qboolean VID_Is8bit(void)
@@ -483,8 +368,13 @@ void VID_Init(unsigned char *palette)
 	qboolean fullscreen = true;
 	int MajorVersion, MinorVersion;
 	int actualWidth, actualHeight;
+	MwSizeHints sh;
+	MwWidget label;
 
 	mouse_avail = 1;
+
+	mouse.x = 0;
+	mouse.y = 0;
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
@@ -521,22 +411,26 @@ void VID_Init(unsigned char *palette)
 	if (vid.conheight < 200)
 		vid.conheight = 200;
 
-	win = RGFW_createWindow("Quake", 0, 0, width, height, RGFW_windowCenter | RGFW_windowOpenGL);
-	RGFW_window_makeCurrentWindow_OpenGL(win);
+	win = MwVaCreateWidget(MwWindowClass, "Quake", NULL, MwDEFAULT, MwDEFAULT, width, height + 24,
+		MwNtitle, "Quake",
+	NULL);
+	label = MwVaCreateWidget(MwLabelClass, "Label", win, 0, height, width, 24,
+		MwNtext, "Milsko Quake!",
+	NULL);
+	opengl = MwCreateWidget(MwOpenGLClass, "OpenGL", win, 0, 0, width, height);
 
-	RGFW_setMousePosCallback(mouseposfunc);
-	RGFW_setMouseScrollCallback(scrollfunc);
-	RGFW_setFocusCallback(focusfunc);
-	RGFW_setKeyCallback(keyfunc);
-	RGFW_setMouseButtonCallback(mousebuttonfunc);
+	sh.min_width = sh.min_width = width;
+	sh.min_height = sh.max_height = height;
+	MwVaApply(win,
+		MwNsizeHints, &sh,
+	NULL);
+
+	MwOpenGLMakeCurrent(opengl);
+
+	MwAddUserHandler(opengl, MwNmouseMoveHandler, mousemove, NULL);
 
 	if(fullscreen){
-		RGFW_monitor mon = RGFW_window_getMonitor(win);
-		width = mon.mode.w;
-		height = mon.mode.h;
-
-		RGFW_window_resize(win, width, height);
-		RGFW_window_setFullscreen(win, 1);
+		/* todo */
 	}
 
 	scr_width = width;
