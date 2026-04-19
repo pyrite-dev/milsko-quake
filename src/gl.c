@@ -107,15 +107,15 @@ static void uninstall_grabs(void)
 }
 
 static int MilskoToQuakeKey(int key){
-	if(key == MwLLKeyEnter) key = K_ENTER;
-	if(key == MwLLKeyEscape) key = K_ESCAPE;
-	if(key == MwLLKeyBackSpace) key = K_BACKSPACE;
-	if(key == MwLLKeyLeft) key = K_LEFTARROW;
-	if(key == MwLLKeyRight) key = K_RIGHTARROW;
-	if(key == MwLLKeyUp) key = K_UPARROW;
-	if(key == MwLLKeyDown) key = K_DOWNARROW;
-	if(key == MwLLKeyLeftShift) key = K_SHIFT;
-	if(key == MwLLKeyRightShift) key = K_SHIFT;
+	if(key == MwKEY_ENTER) key = K_ENTER;
+	if(key == MwKEY_ESCAPE) key = K_ESCAPE;
+	if(key == MwKEY_BACKSPACE) key = K_BACKSPACE;
+	if(key == MwKEY_LEFT) key = K_LEFTARROW;
+	if(key == MwKEY_RIGHT) key = K_RIGHTARROW;
+	if(key == MwKEY_UP) key = K_UPARROW;
+	if(key == MwKEY_DOWN) key = K_DOWNARROW;
+	if(key == MwKEY_LEFTSHIFT) key = K_SHIFT;
+	if(key == MwKEY_RIGHTSHIFT) key = K_SHIFT;
 
 	if('A' <= key && key <= 'Z') return tolower(key);
 
@@ -124,11 +124,11 @@ static int MilskoToQuakeKey(int key){
 
 static int MilskoToQuakeMouse(int btn){
 	int b = 0;
-	if(btn == MwLLMouseLeft) b = 0;
-	if(btn == MwLLMouseMiddle) b = 2;
-	if(btn == MwLLMouseRight) b = 1;
-	if(btn == MwLLMouseWheelUp) return K_MWHEELUP;
-	if(btn == MwLLMouseWheelDown) return K_MWHEELDOWN;
+	if(btn == MwMOUSE_LEFT) b = 0;
+	if(btn == MwMOUSE_MIDDLE) b = 2;
+	if(btn == MwMOUSE_RIGHT) b = 1;
+	if(btn == MwMOUSE_WHEELUP) return K_MWHEELUP;
+	if(btn == MwMOUSE_WHEELDOWN) return K_MWHEELDOWN;
 
 	return K_MOUSE1 + b;
 }
@@ -148,7 +148,7 @@ void key(MwWidget handle, void* user, void* call){
 	int k = *(int*)call;
 	k = MilskoToQuakeKey(k);
 	if(k == -0xdead) return;
-	if(k & MwLLKeyMask) return;
+	if(k & MwKEY_FLAG) return;
 	Key_Event(k, 1);
 }
 
@@ -156,17 +156,17 @@ void keyrelease(MwWidget handle, void* user, void* call){
 	int k = *(int*)call;
 	k = MilskoToQuakeKey(k);
 	if(k == -0xdead) return;
-	if(k & MwLLKeyMask) return;
+	if(k & MwKEY_FLAG) return;
 	Key_Event(k, 0);
 }
 
 void mousedown(MwWidget handle, void* user, void* call){
-	MwLLMouse* m = call;
+	MwMouse* m = call;
 	Key_Event(MilskoToQuakeMouse(m->button), 1);
 }
 
 void mouseup(MwWidget handle, void* user, void* call){
-	MwLLMouse* m = call;
+	MwMouse* m = call;
 	Key_Event(MilskoToQuakeMouse(m->button), 0);
 }
 
