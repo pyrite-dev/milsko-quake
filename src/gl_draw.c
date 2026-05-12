@@ -1060,26 +1060,9 @@ static	unsigned	scaled[1024*512];	// [512*256];
 		GL_ResampleTexture (data, width, height, scaled, scaled_width, scaled_height);
 
 #ifdef _PSP
-	if(samples == GL_RGB){
-		unsigned old[1024 * 512];
-		unsigned char* b = (unsigned char*)scaled;
-		unsigned char* ob = (unsigned char*)old;
-		int i;
-
-		memcpy(old, scaled, sizeof(scaled));
-
-		for(i = 0; i < scaled_width * scaled_height; i++){
-			int j;
-			for(j = 0; j < 3; j++){
-				b[i * 3 + j] = ob[i * 4 + j];
-			}
-		}
-
-		samples2 = samples;
-	}
-#else
-	samples2 = GL_RGBA;
+	samples = GL_RGBA;
 #endif
+	samples2 = GL_RGBA;
 
 	glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, samples2, GL_UNSIGNED_BYTE, scaled);
 	if (mipmap)
