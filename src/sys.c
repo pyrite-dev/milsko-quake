@@ -1,3 +1,5 @@
+#include "port.h"
+
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -8,13 +10,10 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
 #include <sys/stat.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/wait.h>
-#include <sys/mman.h>
 #include <errno.h>
 
 #include "quakedef.h"
@@ -118,7 +117,9 @@ static char end2[] =
 void Sys_Quit (void)
 {
 	Host_Shutdown();
+#ifndef NO_FCNTL
     fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);
+#endif
 #if 0
 	if (registered.value)
 		printf("%s", end2);
@@ -142,7 +143,9 @@ void Sys_Error (char *error, ...)
     char        string[1024];
 
 // change stdin to non blocking
+#ifndef NO_FCNTL
     fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);
+#endif
     
     va_start (argptr,error);
     vsprintf (string,error,argptr);
@@ -209,7 +212,9 @@ int Sys_FileOpenWrite (char *path)
 {
 	int     handle;
 
+#if 0
 	umask (0);
+#endif
 	
 	handle = open(path,O_RDWR | O_CREAT | O_TRUNC
 	, 0666);
@@ -353,7 +358,6 @@ void Sys_LowFPPrecision (void)
 
 int main (int c, char **v)
 {
-
 	double		time, oldtime, newtime;
 	quakeparms_t parms;
 	extern int vcrFile;
@@ -386,7 +390,9 @@ int main (int c, char **v)
 // caching is disabled by default, use -cachedir to enable
 //	parms.cachedir = cachedir;
 
+#ifndef NO_FCNTL
 	fcntl(0, F_SETFL, fcntl (0, F_GETFL, 0) | O_NDELAY);
+#endif
 
     Host_Init(&parms);
 
@@ -395,8 +401,10 @@ int main (int c, char **v)
 	if (COM_CheckParm("-nostdout"))
 		nostdout = 1;
 	else {
+#ifndef NO_FCNTL
 		fcntl(0, F_SETFL, fcntl (0, F_GETFL, 0) | O_NDELAY);
-		printf ("Milsko Quake -- Version %0.3f\n", LINUX_VERSION);
+#endif
+		printf ("Generic Quake -- Version %0.3f\n", LINUX_VERSION);
 	}
 
     oldtime = Sys_FloatTime () - 0.1;
@@ -427,31 +435,6 @@ int main (int c, char **v)
         if (sys_linerefresh.value)
             Sys_LineRefresh ();
     }
-
-}
-
-
-/*
-================
-Sys_MakeCodeWriteable
-================
-*/
-void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
-{
-
-	int r;
-	unsigned long addr;
-	int psize = getpagesize();
-
-	addr = (startaddr & ~(psize-1)) - psize;
-
-//	fprintf(stderr, "writable code %lx(%lx)-%lx, length=%lx\n", startaddr,
-//			addr, startaddr+length, length);
-
-	r = mprotect((char*)addr, length + startaddr - addr + psize, 7);
-
-	if (r < 0)
-    		Sys_Error("Protection change failed\n");
 
 }
 

@@ -659,6 +659,7 @@ void R_DrawParticles (void)
 #ifdef GLQUAKE
 	vec3_t			up, right;
 	float			scale;
+	byte* c;
 
     GL_Bind(particletexture);
 	glEnable (GL_BLEND);
@@ -717,7 +718,9 @@ void R_DrawParticles (void)
 			scale = 1;
 		else
 			scale = 1 + scale * 0.004;
-		glColor3ubv ((byte *)&d_8to24table[(int)p->color]);
+
+		c = (byte *)&d_8to24table[(int)p->color];
+		glColor3ub (c[0], c[1], c[2]);
 		glTexCoord2f (0,0);
 		glVertex3fv (p->org);
 		glTexCoord2f (1,0);

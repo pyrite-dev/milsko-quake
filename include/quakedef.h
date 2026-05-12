@@ -355,3 +355,5 @@ void Port_Step(void);
 void Port_GrabPointer(int toggle);
 void Port_Shutdown(void);
 void Port_SwapBuffer(void);
+
+#include "port.h"

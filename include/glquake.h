@@ -29,12 +29,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <windows.h>
 #endif
 
+#ifdef USE_SDL2
+#include <SDL_opengl.h>
+#else
 #ifndef __APPLE__
 #include <GL/gl.h>
-#include <GL/glu.h>
 #else
 #include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+#endif
+#endif
+
+#ifdef _EE
+#define glFinish(...) {}
+#define glDepthRange(...) {}
+#define glColor3ub(r,g,b) glColor3f((r) / 255.0, (g) / 255.0, (b) / 255.0)
+#elif defined(__vita__)
+#define glDrawBuffer(...) {}
 #endif
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);

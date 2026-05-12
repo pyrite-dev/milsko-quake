@@ -336,6 +336,10 @@ void VID_Init(unsigned char *palette)
 	int MajorVersion, MinorVersion;
 	int actualWidth, actualHeight;
 
+#ifdef _PSP
+	width = 480, height = 272;
+#endif
+
 	fullscreen = qtrue;
 
 	mouse_avail = 1;

@@ -31,7 +31,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#ifndef __vita__
 #include <sys/ioctl.h>
+#endif
 #include <unistd.h>
 #endif
 #include <sys/param.h>
@@ -77,7 +79,11 @@ int UDP_Init (void)
 		return -1;
 
 	// determine my name & address
+#ifdef _EE
+	strcpy(buff, "PS2");
+#else
 	gethostname(buff, MAXHOSTNAMELEN);
+#endif
 	local = gethostbyname(buff);
 	myAddr = *(int *)local->h_addr_list[0];
 
@@ -149,11 +155,13 @@ int UDP_OpenSocket (int port)
 
 #ifdef _WIN32
 	if (ioctl (newsocket, FIONBIO, (u_long*)&_qtrue) == -1)
-		goto ErrorReturn;
+#elif defined(_PSP) || defined(__vita__)
+	if(setsockopt(newsocket, SOL_SOCKET, SO_NONBLOCK, (char*)_qtrue, sizeof(_qtrue)) == -1)
+#elif defined(_EE)
 #else
 	if (ioctl (newsocket, FIONBIO, (char *)&_qtrue) == -1)
-		goto ErrorReturn;
 #endif
+		goto ErrorReturn;
 
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
@@ -251,8 +259,11 @@ int UDP_CheckNewConnections (void)
 	if (net_acceptsocket == -1)
 		return -1;
 
+#if defined(_PSP) || defined(_EE) || defined(__vita__)
+#else
 	if (ioctl (net_acceptsocket, FIONREAD, &available) == -1)
 		Sys_Error ("UDP: ioctlsocket (FIONREAD) failed\n");
+#endif
 	if (available)
 		return net_acceptsocket;
 	return -1;
@@ -262,7 +273,7 @@ int UDP_CheckNewConnections (void)
 
 int UDP_Read (int socket, byte *buf, int len, struct qsockaddr *addr)
 {
-	int addrlen = sizeof (struct qsockaddr);
+	SOCKLEN_T addrlen = sizeof (struct qsockaddr);
 	int ret;
 
 	ret = recvfrom (socket, buf, len, 0, (struct sockaddr *)addr, &addrlen);
@@ -350,7 +361,7 @@ int UDP_StringToAddr (char *string, struct qsockaddr *addr)
 
 int UDP_GetSocketAddr (int socket, struct qsockaddr *addr)
 {
-	int addrlen = sizeof(struct qsockaddr);
+	SOCKLEN_T addrlen = sizeof(struct qsockaddr);
 	unsigned int a;
 
 	Q_memset(addr, 0, sizeof(struct qsockaddr));
